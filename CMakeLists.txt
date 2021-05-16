@@ -15,7 +15,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
-add_executable(nemo_solver main.cpp MainWindow.cpp MainWindow.h)
+add_executable(nemo_solver main.cpp MainWindow.cpp MainWindow.h frmInputNumber.cpp frmInputNumber.h)
 
 target_link_libraries(nemo_solver PRIVATE Qt5::Widgets)
 
