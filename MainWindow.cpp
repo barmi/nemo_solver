@@ -11,7 +11,7 @@
 #include "frmInputNumber.h"
 
 MainWindow::MainWindow(QWidget *parent)
-        : QWidget(parent)
+        : QWidget(parent), board(nullptr)
 {
     setWindowTitle("NemoNemo Solver");
 
@@ -19,12 +19,12 @@ MainWindow::MainWindow(QWidget *parent)
     m_edit_col = new QPlainTextEdit(this);
     m_edit_col->setTabChangesFocus(true);
     m_edit_col->setFixedSize(60, 30);
-    m_edit_col->setPlainText("20");
+    //m_edit_col->setPlainText("20");
     auto *label2 = new QLabel("세로크기:", this);
     m_edit_row = new QPlainTextEdit(this);
     m_edit_row->setTabChangesFocus(true);
     m_edit_row->setFixedSize(60, 30);
-    m_edit_row->setPlainText("20");
+    //m_edit_row->setPlainText("20");
 
     auto *button1 = new QPushButton("가로입력", this);
     button1->setGeometry(0, 0, 150, 40);
@@ -44,7 +44,10 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(button1, 1, 0, 1, 2);
     layout->addWidget(button2, 1, 2, 1, 2);
 
+
     setLayout(layout);
+
+    LoadData();
 }
 
 MainWindow::~MainWindow()
@@ -67,4 +70,44 @@ void MainWindow::inputHorizontalNumbers()
 {
     auto frm = new frmInputNumber("", this, false, m_edit_col->toPlainText().toInt());
     frm->exec();
+}
+
+void MainWindow::LoadData()
+{
+    FILE *fp;
+
+    int sizex, sizey;
+    if ((fp = fopen("nemo2.in", "rt"))) {
+        label_col.clear();
+        label_row.clear();
+
+        fscanf(fp, "%d %d", &sizex, &sizey);
+        for (int i = 0; i < sizex; i++) {
+            int num;
+            vector<uint8_t> l;
+            fscanf(fp, "%d", &num);
+            for (int j = 0; j < num; j++) {
+                int label;
+                fscanf(fp, "%d", &label);
+                l.push_back(label);
+            }
+            label_col.push_back(l);
+        }
+        for (int i = 0; i < sizey; i++) {
+            int num;
+            vector<uint8_t> l;
+            fscanf(fp, "%d", &num);
+            for (int j = 0; j < num; j++) {
+                int label;
+                fscanf(fp, "%d", &label);
+                l.push_back(label);
+            }
+            label_row.push_back(l);
+        }
+
+        m_edit_col->setPlainText(QString::number(sizex));
+        m_edit_row->setPlainText(QString::number(sizey));
+
+        fclose(fp);
+    }
 }

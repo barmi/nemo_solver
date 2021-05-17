@@ -11,9 +11,15 @@ class frmInputNumber : public QDialog
 {
     Q_OBJECT
 
+private:
+    int row, col;
+    bool is_row;
+
 public:
     frmInputNumber(const QString &title, QWidget *parent, bool isRow, int num);
 
+public slots:
+    void verify();
 
 };
 
