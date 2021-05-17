@@ -6,9 +6,13 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
+#include <QFileDialog>
+
+#include <iostream>
 
 #include "MainWindow.h"
 #include "frmInputNumber.h"
+#include "nemo_util.h"
 
 MainWindow::MainWindow(QWidget *parent)
         : QWidget(parent), board(nullptr)
@@ -27,12 +31,12 @@ MainWindow::MainWindow(QWidget *parent)
     //m_edit_row->setPlainText("20");
 
     auto *button1 = new QPushButton("가로입력", this);
-    button1->setGeometry(0, 0, 150, 40);
+    button1->setFixedSize(150, 40);
     connect(button1, &QPushButton::clicked, this, &MainWindow::inputVerticalNumbers);
     button1->show();
 
     auto *button2 = new QPushButton("세로입력",  this);
-    button2->setGeometry(160, 0, 150, 40);
+    button2->setFixedSize(150, 40);
     connect(button2, &QPushButton::clicked, this, &MainWindow::inputHorizontalNumbers);
     button2->show();
 
@@ -44,10 +48,22 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(button1, 1, 0, 1, 2);
     layout->addWidget(button2, 1, 2, 1, 2);
 
+    auto *button = new QPushButton("Load", this);
+    button->setFixedSize(150, 40);
+    connect(button, &QPushButton::clicked, this, &MainWindow::FileLoad);
+    layout->addWidget(button, 2, 0, 1, 2);
+
+    button = new QPushButton("Save", this);
+    button->setFixedSize(150, 40);
+    connect(button, &QPushButton::clicked, this, &MainWindow::FileSave);
+    layout->addWidget(button, 2, 2, 1, 2);
+
+    button = new QPushButton("풀기", this);
+    button->setFixedSize(150, 40);
+    connect(button, &QPushButton::clicked, this, &MainWindow::Process);
+    layout->addWidget(button, 3, 0, 1, 2);
 
     setLayout(layout);
-
-    LoadData();
 }
 
 MainWindow::~MainWindow()
@@ -72,12 +88,16 @@ void MainWindow::inputHorizontalNumbers()
     frm->exec();
 }
 
-void MainWindow::LoadData()
+void MainWindow::FileLoad()
 {
+    QString fname = QFileDialog::getOpenFileName(this,
+                                                 "불러올 파일 선택",
+                                                 QDir::currentPath(),
+                                                 "Files (*.*)");
     FILE *fp;
 
     int sizex, sizey;
-    if ((fp = fopen("nemo2.in", "rt"))) {
+    if ((fp = fopen(fname.toStdString().c_str(), "rt"))) {
         label_col.clear();
         label_row.clear();
 
@@ -109,5 +129,53 @@ void MainWindow::LoadData()
         m_edit_row->setPlainText(QString::number(sizey));
 
         fclose(fp);
+    }
+}
+
+void MainWindow::FileSave()
+{
+
+}
+
+void MainWindow::Process()
+{
+    delete [] board;
+
+    int w = m_edit_col->toPlainText().toInt();
+    int h = m_edit_row->toPlainText().toInt();
+    board = new char[ w * h ];
+    memset(board, ' ', w * h);
+    bool is_continue = false;
+    for (int i = 0; i < 10; i++) {
+        for (int y = 0; y < h; y++) {
+            string line = string(w, ' ');
+            for (int x = 0; x < w; x++)
+                line[x] = board[y * w + x];
+            string guess;
+            seq_t seq;
+            seq.assign(label_row[y].begin(), label_row[y].end());
+            find_all_seq(w, seq, "", line, guess);
+            for (int x = 0; x < w; x++)
+                board[y * w + x] = line[x];
+            cout << guess << "\n";
+        }
+        for (int x = 0; x < w; x++) {
+            string line = string(h, ' ');
+            for (int y = 0; y < h; y++)
+                line[y] = board[y * w + x];
+            string guess;
+            seq_t seq;
+            seq.assign(label_col[x].begin(), label_col[x].end());
+            find_all_seq(h, seq, "", line, guess);
+            for (int y = 0; y < h; y++)
+                board[y * w + x] = line[y];
+        }
+        cout << i << " ------------------------\n";
+    }
+
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++)
+            cout << board[y * w + x];
+        cout << "\n";
     }
 }

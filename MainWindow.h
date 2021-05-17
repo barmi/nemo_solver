@@ -27,8 +27,12 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+public slots:
     void inputVerticalNumbers();
     void inputHorizontalNumbers();
+    void FileLoad();
+    void FileSave();
+    void Process();
 
 private:
     void paintEvent(QPaintEvent *event) override;
