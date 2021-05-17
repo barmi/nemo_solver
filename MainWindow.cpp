@@ -145,8 +145,10 @@ void MainWindow::Process()
     int h = m_edit_row->toPlainText().toInt();
     board = new char[ w * h ];
     memset(board, ' ', w * h);
-    bool is_continue = false;
-    for (int i = 0; i < 10; i++) {
+    bool is_continue;
+    int try_count = 0;
+    do {
+        is_continue = false;
         for (int y = 0; y < h; y++) {
             string line = string(w, ' ');
             for (int x = 0; x < w; x++)
@@ -155,8 +157,12 @@ void MainWindow::Process()
             seq_t seq;
             seq.assign(label_row[y].begin(), label_row[y].end());
             find_all_seq(w, seq, "", line, guess);
-            for (int x = 0; x < w; x++)
-                board[y * w + x] = line[x];
+            for (int x = 0; x < w; x++) {
+                if (board[y * w + x] != guess[x]) {
+                    is_continue = true;
+                    board[y * w + x] = guess[x];
+                }
+            }
             cout << guess << "\n";
         }
         for (int x = 0; x < w; x++) {
@@ -167,11 +173,15 @@ void MainWindow::Process()
             seq_t seq;
             seq.assign(label_col[x].begin(), label_col[x].end());
             find_all_seq(h, seq, "", line, guess);
-            for (int y = 0; y < h; y++)
-                board[y * w + x] = line[y];
+            for (int y = 0; y < h; y++) {
+                if (board[y * w + x] != guess[y]) {
+                    is_continue = true;
+                    board[y * w + x] = guess[y];
+                }
+            }
         }
-        cout << i << " ------------------------\n";
-    }
+        cout << try_count++ << " ------------------------\n";
+    } while (is_continue);
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++)
