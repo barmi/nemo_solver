@@ -76,8 +76,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 void MainWindow::inputVerticalNumbers()
 {
-//    QString text = "col=" + m_edit_col.toPlainText() + ", row=" + m_edit_row.toPlainText();
-//    QMessageBox::information(this, "info", text);
     auto frm = new frmInputNumber("", this, true, m_edit_row->toPlainText().toInt());
     frm->exec();
 }
@@ -134,7 +132,35 @@ void MainWindow::FileLoad()
 
 void MainWindow::FileSave()
 {
+    QString fname = QFileDialog::getSaveFileName(this,
+                                                 "저장할 파일 선택",
+                                                 QDir::currentPath(),
+                                                 "Files (*.*)");
+    FILE *fp;
 
+    if ((fp = fopen(fname.toStdString().c_str(), "wt"))) {
+        auto sizex = label_col.size();
+        auto sizey = label_row.size();
+
+        fprintf(fp, "%lu %lu\n", sizex, sizey);
+        for (const auto& i : label_col) {
+            fprintf(fp, "%lu ", i.size());
+            for (auto j : i) {
+                fprintf(fp, "%d ", j);
+            }
+            fprintf(fp, "\n");
+        }
+        fprintf(fp, "\n");
+        for (const auto& i : label_row) {
+            fprintf(fp, "%lu ", i.size());
+            for (auto j : i) {
+                fprintf(fp, "%d ", j);
+            }
+            fprintf(fp, "\n");
+        }
+
+        fclose(fp);
+    }
 }
 
 void MainWindow::Process()
@@ -165,6 +191,7 @@ void MainWindow::Process()
             }
             cout << guess << "\n";
         }
+        cout << "----------------------\n";
         for (int x = 0; x < w; x++) {
             string line = string(h, ' ');
             for (int y = 0; y < h; y++)
@@ -180,12 +207,19 @@ void MainWindow::Process()
                 }
             }
         }
+        for (int y = 0; y < h; y++) {
+            string line = string(w, ' ');
+            for (int x = 0; x < w; x++)
+                line[x] = board[y * w + x];
+            cout << line << "\n";
+        }
+
         cout << try_count++ << " ------------------------\n";
     } while (is_continue);
 
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++)
-            cout << board[y * w + x];
+            cout << (char)((board[y * w + x] == 'x') ? '.' : board[y * w + x]) ;
         cout << "\n";
     }
 }

@@ -66,9 +66,8 @@ frmInputNumber::frmInputNumber(const QString &title, QWidget *parent, bool isRow
 void frmInputNumber::verify()
 {
     MainWindow *w = (MainWindow *)parent();
-    w->label_col.clear();
-    w->label_row.clear();
     if (is_row) {
+        w->label_row.clear();
         for (int y = 0; y < row; y++) {
             vector<uint8_t> l;
             for (int x = 0; x < col; x++) {
@@ -81,6 +80,7 @@ void frmInputNumber::verify()
         }
     }
     else {
+        w->label_col.clear();
         for (int x = 0; x < col; x++) {
             vector<uint8_t> l;
             for (int y = 0; y < row; y++) {
