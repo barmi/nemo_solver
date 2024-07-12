@@ -5,51 +5,71 @@ class NonogramSolver:
         self.height = len(row_clues)
         self.width = len(col_clues)
         self.grid = [[' ' for _ in range(self.width)] for _ in range(self.height)]
-
-    def is_valid_row(self, row, clue, row_idx):
-        filled_blocks = ''.join(self.grid[row_idx]).split()
-        filled_blocks = [len(block) for block in filled_blocks if block]
-        return filled_blocks == clue
-
-    def is_valid_col(self, col, clue, col_idx):
-        filled_blocks = ''.join([self.grid[row_idx][col_idx] for row_idx in range(self.height)]).split()
-        filled_blocks = [len(block) for block in filled_blocks if block]
-        return filled_blocks == clue
+        self.row_possibilities = [self.get_possibilities(self.width, clue) for clue in self.row_clues]
+        self.col_possibilities = [self.get_possibilities(self.height, clue) for clue in self.col_clues]
 
     def solve(self):
-        changed = True
-        while changed:
-            changed = False
-            for row_idx, clue in enumerate(self.row_clues):
-                if self.update_row(row_idx, clue):
-                    changed = True
-            for col_idx, clue in enumerate(self.col_clues):
-                if self.update_col(col_idx, clue):
-                    changed = True
+        self.fill_determined_cells()
+        if not self.is_solved():
+            self.backtrack(0, 0)
         return self.grid
 
-    def update_row(self, row_idx, clue):
-        original_row = self.grid[row_idx][:]
-        possible_row = self.fill_line(self.width, clue, self.grid[row_idx])
-        self.grid[row_idx] = possible_row
-        return original_row != possible_row
+    def is_solved(self):
+        for row in self.grid:
+            if ' ' in row:
+                return False
+        return True
 
-    def update_col(self, col_idx, clue):
-        original_col = [self.grid[row_idx][col_idx] for row_idx in range(self.height)]
-        col = [self.grid[row_idx][col_idx] for row_idx in range(self.height)]
-        possible_col = self.fill_line(self.height, clue, col)
-        for row_idx in range(self.height):
-            self.grid[row_idx][col_idx] = possible_col[row_idx]
-        return original_col != possible_col
+    def fill_determined_cells(self):
+        for row_idx, row_pos in enumerate(self.row_possibilities):
+            self.grid[row_idx] = self.intersection(row_pos)
+        for col_idx, col_pos in enumerate(self.col_possibilities):
+            col_values = self.intersection(col_pos)
+            for row_idx in range(self.height):
+                if col_values[row_idx] != ' ':
+                    self.grid[row_idx][col_idx] = col_values[row_idx]
 
-    def fill_line(self, length, clue, line):
-        possibilities = self.get_possibilities(length, clue)
-        result = [' '] * length
-        for pos in possibilities:
-            for idx in range(length):
-                if line[idx] == ' ' or line[idx] == pos[idx]:
-                    result[idx] = pos[idx]
+    def intersection(self, possibilities):
+        transposed = list(map(list, zip(*possibilities)))
+        result = []
+        for values in transposed:
+            if all(val == values[0] for val in values):
+                result.append(values[0])
+            else:
+                result.append(' ')
         return result
+
+    def backtrack(self, row_idx, col_idx):
+        if row_idx == self.height:
+            return True
+        if col_idx == self.width:
+            return self.backtrack(row_idx + 1, 0)
+        if self.grid[row_idx][col_idx] != ' ':
+            return self.backtrack(row_idx, col_idx + 1)
+
+        for val in ['#', ' ']:
+            self.grid[row_idx][col_idx] = val
+            if self.is_valid():
+                if self.backtrack(row_idx, col_idx + 1):
+                    return True
+        self.grid[row_idx][col_idx] = ' '
+        return False
+
+    def is_valid(self):
+        for row_idx in range(self.height):
+            row = self.grid[row_idx]
+            if not self.matches_clue(row, self.row_clues[row_idx]):
+                return False
+        for col_idx in range(self.width):
+            col = [self.grid[row_idx][col_idx] for row_idx in range(self.height)]
+            if not self.matches_clue(col, self.col_clues[col_idx]):
+                return False
+        return True
+
+    def matches_clue(self, line, clue):
+        blocks = ''.join(line).split()
+        blocks = [len(block) for block in blocks if block == '#']
+        return blocks == clue
 
     def get_possibilities(self, length, clue):
         if not clue:
@@ -73,23 +93,26 @@ def parse_input(file_path):
     with open(file_path, 'r') as f:
         lines = f.readlines()
 
-    dimensions = list(map(int, lines[0].split()))
+    dimensions = list(map(int, lines[0].strip().split()))
     row_clues = []
     col_clues = []
 
     i = 1
     for _ in range(dimensions[0]):
-        row_clues.append(list(map(int, lines[i].split())))
+        row_clues.append(list(map(int, lines[i].strip().split())))
         i += 1
 
+    i += 1
     for _ in range(dimensions[1]):
-        col_clues.append(list(map(int, lines[i].split())))
+        line = lines[i].strip().split()
+        if len(line) > 0:
+            col_clues.append(list(map(int, line)))
         i += 1
 
     return row_clues, col_clues
 
 # Example usage:
-file_path = 'input.txt'  # Input file path
+file_path = '1-4302.jpeg.txt'  # Input file path
 row_clues, col_clues = parse_input(file_path)
 solver = NonogramSolver(row_clues, col_clues)
 solution = solver.solve()
