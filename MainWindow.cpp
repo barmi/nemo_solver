@@ -99,6 +99,7 @@ void MainWindow::FileLoad()
         label_col.clear();
         label_row.clear();
 
+        int sum = 0;
         fscanf(fp, "%d %d", &sizex, &sizey);
         for (int i = 0; i < sizex; i++) {
             int num;
@@ -108,9 +109,13 @@ void MainWindow::FileLoad()
                 int label;
                 fscanf(fp, "%d", &label);
                 l.push_back(label);
+                sum += label;
             }
             label_col.push_back(l);
         }
+        cout << "세로합 : " << sum << endl;
+
+        sum = 0;
         for (int i = 0; i < sizey; i++) {
             int num;
             vector<uint8_t> l;
@@ -118,10 +123,12 @@ void MainWindow::FileLoad()
             for (int j = 0; j < num; j++) {
                 int label;
                 fscanf(fp, "%d", &label);
+                sum += label;
                 l.push_back(label);
             }
             label_row.push_back(l);
         }
+        cout << "가로합 : " << sum << endl;
 
         m_edit_col->setPlainText(QString::number(sizex));
         m_edit_row->setPlainText(QString::number(sizey));
@@ -177,33 +184,62 @@ void MainWindow::Process()
         is_continue = false;
         for (int y = 0; y < h; y++) {
             string line = string(w, ' ');
-            for (int x = 0; x < w; x++)
-                line[x] = board[y * w + x];
-            string guess;
-            seq_t seq;
-            seq.assign(label_row[y].begin(), label_row[y].end());
-            find_all_seq(w, seq, "", line, guess);
+            int blank_count = 0;
             for (int x = 0; x < w; x++) {
-                if (board[y * w + x] != guess[x]) {
-                    is_continue = true;
-                    board[y * w + x] = guess[x];
+                line[x] = board[y * w + x];
+                if (line[x] == ' ') {
+                    ++blank_count;
                 }
             }
-            cout << guess << "\n";
+            if (blank_count == 0) {
+                cout << line << "\n";
+            }
+            else {
+                string guess;
+                seq_t seq;
+                seq.assign(label_row[y].begin(), label_row[y].end());
+                // 모두 비어 있고, 확정할 수 없는 라인이면 찾지 않는다. (건너 뛴다)
+                if (line == string(w, ' ') && (w - (accumulate(seq.begin(), seq.end(), 0) + seq.size() - 1)) >=
+                                              *max_element(seq.begin(), seq.end()))
+                    guess = string(w, ' ');
+                else
+                    find_all_seq(w, seq, "", line, guess);
+
+                for (int x = 0; x < w; x++) {
+                    if (board[y * w + x] != guess[x]) {
+                        is_continue = true;
+                        board[y * w + x] = guess[x];
+                    }
+                }
+                cout << guess << "\n";
+            }
         }
         cout << "----------------------\n";
         for (int x = 0; x < w; x++) {
             string line = string(h, ' ');
-            for (int y = 0; y < h; y++)
-                line[y] = board[y * w + x];
-            string guess;
-            seq_t seq;
-            seq.assign(label_col[x].begin(), label_col[x].end());
-            find_all_seq(h, seq, "", line, guess);
+            int blank_count = 0;
             for (int y = 0; y < h; y++) {
-                if (board[y * w + x] != guess[y]) {
-                    is_continue = true;
-                    board[y * w + x] = guess[y];
+                line[y] = board[y * w + x];
+                if (line[y] == ' ') {
+                    ++blank_count;
+                }
+            }
+            if (blank_count > 0) {
+                string guess;
+                seq_t seq;
+                seq.assign(label_col[x].begin(), label_col[x].end());
+                // 모두 비어 있고, 확정할 수 없는 라인이면 찾지 않는다. (건너 뛴다)
+                if (line == string(h, ' ') && (h - (accumulate(seq.begin(), seq.end(), 0) + seq.size() - 1)) >=
+                                              *max_element(seq.begin(), seq.end()))
+                    guess = string(h, ' ');
+                else
+                    find_all_seq(h, seq, "", line, guess);
+
+                for (int y = 0; y < h; y++) {
+                    if (board[y * w + x] != guess[y]) {
+                        is_continue = true;
+                        board[y * w + x] = guess[y];
+                    }
                 }
             }
         }

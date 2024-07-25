@@ -14,12 +14,17 @@ class frmInputNumber : public QDialog
 private:
     int row, col;
     bool is_row;
+    int cur_x, cur_y;
+    void setCellColor(const QColor &color);
 
 public:
     frmInputNumber(const QString &title, QWidget *parent, bool isRow, int num);
 
 public slots:
     void verify();
+
+protected:
+    void keyPressEvent(QKeyEvent *keyevent);
 
 };
 
