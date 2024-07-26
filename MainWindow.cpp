@@ -9,6 +9,7 @@
 #include <QFileDialog>
 
 #include <iostream>
+#include <QPainter>
 
 #include "MainWindow.h"
 #include "frmInputNumber.h"
@@ -90,8 +91,9 @@ void MainWindow::FileLoad()
 {
     QString fname = QFileDialog::getOpenFileName(this,
                                                  "불러올 파일 선택",
-                                                 QDir::currentPath(),
+                                                 QDir::currentPath() + "/data",
                                                  "Files (*.*)");
+    load_file_name = fname.toStdString();
     FILE *fp;
 
     int sizex, sizey;
@@ -253,9 +255,102 @@ void MainWindow::Process()
         cout << try_count++ << " ------------------------\n";
     } while (is_continue);
 
+    // 결과를 txt파일로 저장한다.
+    string file_name = load_file_name + "_out.txt";
+    FILE *fp;
+    if ((fp = fopen(file_name.c_str(), "wt"))) {
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++)
+                fprintf(fp, "%c", (board[y * w + x] == 'x') ? '.' : board[y * w + x]);
+            fprintf(fp, "\n");
+        }
+        fclose(fp);
+    }
+
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++)
             cout << (char)((board[y * w + x] == 'x') ? '.' : board[y * w + x]) ;
         cout << "\n";
     }
+
+    // 연속된 숫자 찾기
+    int * right_count = new int[w * h];
+    int * down_count = new int[w * h];
+    for (int y = 0; y < h; y++) {
+        int count = 0;
+        for (int x = 0; x < w; x++) {
+            if (x == 0) {
+                right_count[y * w + x] = 1;
+            } else {
+                if (board[y * w + x] == board[y * w + x - 1]) {
+                    right_count[y * w + x] = right_count[y * w + x - 1] + 1;
+                } else {
+                    right_count[y * w + x] = 1;
+                }
+            }
+            if (y == 0) {
+                down_count[y * w + x] = 1;
+            } else {
+                if (board[y * w + x] == board[(y - 1) * w + x]) {
+                    down_count[y * w + x] = down_count[(y - 1) * w + x] + 1;
+                } else {
+                    down_count[y * w + x] = 1;
+                }
+            }
+        }
+    }
+
+    // 결과를 이미지로 저장
+    int grid_size = 50;
+
+    QImage img(grid_size * w, grid_size * h, QImage::Format_RGB32);
+    img.fill(Qt::white);
+    QPainter painter(&img);
+    QPen pen_black(Qt::black, 1);
+    QPen pen_gray(Qt::gray, 1);
+    QPen pen_green(Qt::green, 1);
+
+    painter.setPen(QPen(Qt::black, 1));
+    // 그림에 숫자 표시
+    QFont font = painter.font();
+    font.setPixelSize(14);
+    painter.setFont(font);
+
+
+    QFontMetrics fm(font);
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            if (board[y * w + x] == 'x') {
+                painter.setBrush(QBrush(Qt::lightGray));
+            }
+            else {
+                painter.setBrush(QBrush(Qt::black));
+            }
+            painter.setPen(QPen(Qt::white, 1));
+            painter.drawRect(x * grid_size, y * grid_size, grid_size, grid_size);
+            if ((x % 5) == 0 && x) {
+                painter.setPen(QPen(Qt::magenta, 3));
+                painter.drawLine(x * grid_size, y * grid_size, x * grid_size, (y + 1) * grid_size);
+            }
+            if ((y % 5) == 0 && y) {
+                painter.setPen(QPen(Qt::magenta, 3));
+                painter.drawLine(x * grid_size, y * grid_size, (x + 1) * grid_size, y * grid_size);
+            }
+            painter.setPen(QPen(Qt::green, 1));
+
+            QString str = QString::number(right_count[y * w + x]);
+            QRect rect = fm.boundingRect(str);
+            painter.drawText(x * grid_size + int(grid_size * 0.75) - rect.width() / 2, y * grid_size + int(grid_size * 0.3) - rect.height()/2 + fm.ascent(), str);
+
+            str = QString::number(down_count[y * w + x]);
+            rect = fm.boundingRect(str);
+            painter.setPen(QPen(Qt::red, 1));
+            painter.drawText(x * grid_size + int(grid_size * 0.3) - rect.width() / 2, y * grid_size + int(grid_size * 0.75) - rect.height()/2 + fm.ascent(), str);
+        }
+    }
+    painter.end();
+    img.save(QString::fromStdString(load_file_name + "_out.png"));
+
+    delete [] right_count;
+    delete [] down_count;
 }

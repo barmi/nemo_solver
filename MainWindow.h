@@ -21,6 +21,7 @@ public:
 
     vector<vector<uint8_t>> label_row;
     vector<vector<uint8_t>> label_col;
+    string load_file_name;
 
     char *board;
 
