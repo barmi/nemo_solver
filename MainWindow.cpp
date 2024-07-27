@@ -302,8 +302,9 @@ void MainWindow::Process()
 
     // 결과를 이미지로 저장
     int grid_size = 50;
+    int footer_size = 150;
 
-    QImage img(grid_size * w, grid_size * h, QImage::Format_RGB32);
+    QImage img(grid_size * w, grid_size * h + footer_size, QImage::Format_RGB32);
     img.fill(Qt::white);
     QPainter painter(&img);
     QPen pen_black(Qt::black, 1);
@@ -348,6 +349,17 @@ void MainWindow::Process()
             painter.drawText(x * grid_size + int(grid_size * 0.3) - rect.width() / 2, y * grid_size + int(grid_size * 0.75) - rect.height()/2 + fm.ascent(), str);
         }
     }
+    // load file name에서 마지막 '/' 이후의 스트링만 추출
+    QString str = QString::fromStdString(load_file_name);
+    QString fileName = str.section('/', -1);
+    painter.setPen(QPen(Qt::black, 1));
+
+    font.setPixelSize(100);
+    painter.setFont(font);
+    QFontMetrics fm2(font);
+
+    painter.drawText(10, grid_size * h + 10 + fm2.ascent(), fileName);
+
     painter.end();
     img.save(QString::fromStdString(load_file_name + "_out.png"));
 
