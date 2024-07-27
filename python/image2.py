@@ -332,7 +332,7 @@ def find_grid(img_name):
 
 
 
-def get_list_from_image(img_name):
+def get_list_from_image(img_name, set_x, set_y):
     err_count = 0
     rgb = cv2.imread(img_name)
     small = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
@@ -432,6 +432,8 @@ def get_list_from_image(img_name):
     cv2.imwrite(img_name + '_out.png', rgb)
     # cv2.waitKey()
 
+
+
     return _list
 
 
@@ -482,7 +484,53 @@ def reindex_list(_list, num):
     return _list
 
 # idx, x, y, w, h, mid_x, mid_y, value
-def save_file(_list, out_file):
+def save_file(_list, img_name, out_file, set_x, set_y):
+    set_x = sorted(set_x)
+    set_y = sorted(set_y)
+
+    f = open(out_file, 'wt')
+    f.write("{0} {1}\n".format(len(set_x)-1, len(set_y)-1))
+
+    img_num = cv2.imread(img_name)
+    rgb = cv2.imread(img_name, 0)
+    for i in range(len(set_x) - 1):
+        print(f'i : {i}')
+        sub_list = [x for x in _list if x[1] > set_x[i]-10 and (x[1] + x[3]) < set_x[i+1]+10]
+        sub_list = sorted(sub_list, key=lambda x: x[2])
+        f.write("{0}".format(len(sub_list)))
+        for j in range(len(sub_list)):
+            f.write(" {0}".format(sub_list[j][7]))
+            # sub_list[j][index_y] = j
+            print({x: sub_list[j][x] for x in range(8)})
+            num_image = rgb[sub_list[j][2]:sub_list[j][2]+sub_list[j][4], sub_list[j][1]:sub_list[j][1]+sub_list[j][3]]
+            cv2.imwrite(f'../data/_x_{i}_{j}_{sub_list[j][7]}.png', num_image)
+
+            cv2.rectangle(img_num, (sub_list[j][1]-1, sub_list[j][2]-1), (sub_list[j][1]+sub_list[j][3]+1, sub_list[j][2]+sub_list[j][4]+1), (0, 0, 255), -1)
+
+            # cv2.imshow('num_image', num_image)
+            # cv2.waitKey()
+        f.write("\n")
+    print("-------------------------------------------------")
+    f.write("\n")
+    for i in range(len(set_y) - 1):
+        print(f'i : {i}')
+        sub_list = [x for x in _list if x[2] > set_y[i] and (x[2] + x[4]) < set_y[i+1]]
+        sub_list = sorted(sub_list, key=lambda x: x[1])
+        f.write("{0}".format(len(sub_list)))
+        for j in range(len(sub_list)):
+            f.write(" {0}".format(sub_list[j][7]))
+            # sub_list[j][index_y] = j
+            print({x: sub_list[j][x] for x in range(8)})
+            num_image = rgb[sub_list[j][2]:sub_list[j][2]+sub_list[j][4], sub_list[j][1]:sub_list[j][1]+sub_list[j][3]]
+            cv2.imwrite(f'../data/_y_{i}_{j}_{sub_list[j][7]}.png', num_image)
+            cv2.rectangle(img_num, (sub_list[j][1]-1, sub_list[j][2]-1), (sub_list[j][1]+sub_list[j][3]+1, sub_list[j][2]+sub_list[j][4]+1), (0, 0, 255), -1)
+            # cv2.imshow('num_image', num_image)
+            # cv2.waitKey()
+        f.write("\n")
+
+    cv2.imwrite(img_name + '_out_num.png', img_num)
+
+    '''
     # 그룹별로 위치만 정한다
     _list = reindex_list(_list, index_y)
     _list = reindex_list(_list, index_x)
@@ -491,8 +539,6 @@ def save_file(_list, out_file):
     max_col = max(sub[index_x] for sub in _list) + 1
     max_row = max(sub[index_y] for sub in _list) + 1
 
-    f = open(out_file, 'wt')
-    f.write("{0} {1}\n".format(max_col, max_row))
 
     _list = sorted(_list, key=lambda x: x[2] + x[index_x] * 100000)
     w_list = []
@@ -529,6 +575,7 @@ def save_file(_list, out_file):
 
     f.write("{0} ".format(len(w_list)))
     f.write(" ".join(map(str, w_list)))
+    '''
     f.write("\n")
     f.write("\n")
 
@@ -538,8 +585,8 @@ def save_file(_list, out_file):
 # img_name = '1-130.jpeg'     # 30 x 30
 # img_name = '1-133.PNG'
 # img_name = '1-4302.jpeg'
-img_name = '1-4415.PNG'
-# n_list = get_list_from_image('../data/' + img_name)
-# save_file(n_list, '../data/' + img_name + '.in')
+img_name = '1-4536.PNG'
 
-find_grid2('../data/' + img_name)
+set_x, set_y = find_grid2('../data/' + img_name)
+n_list = get_list_from_image('../data/' + img_name, set_x, set_y)
+save_file(n_list, '../data/' + img_name, '../data/' + img_name + '.in', set_x, set_y)

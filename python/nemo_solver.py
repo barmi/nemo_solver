@@ -36,7 +36,8 @@ class NonogramSolver:
             if all(val == values[0] for val in values):
                 result.append(values[0])
             else:
-                result.append(' ')
+                # 'X'로 마킹
+                result.append('X' if 'X' in values else ' ')
         return result
 
     def backtrack(self, row_idx, col_idx):
@@ -67,7 +68,7 @@ class NonogramSolver:
         return True
 
     def matches_clue(self, line, clue):
-        blocks = ''.join(line).split()
+        blocks = ''.join(line).replace('X', ' ').split()
         blocks = [len(block) for block in blocks if block == '#']
         return blocks == clue
 
@@ -104,9 +105,7 @@ def parse_input(file_path):
 
     i += 1
     for _ in range(dimensions[1]):
-        line = lines[i].strip().split()
-        if len(line) > 0:
-            col_clues.append(list(map(int, line)))
+        col_clues.append(list(map(int, lines[i].strip().split())))
         i += 1
 
     return row_clues, col_clues
