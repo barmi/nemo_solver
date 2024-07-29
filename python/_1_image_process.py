@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import pytesseract
 import re
+from _0_game_num import *
 
 # import numpy as np
 from scipy import stats
@@ -581,11 +582,12 @@ def save_file(_list, img_name, out_file, set_x, set_y):
 
     f.close()
 
+
 # img_name = '1-3249.jpeg'    # 25 x 25
 # img_name = '1-130.jpeg'     # 30 x 30
 # img_name = '1-133.PNG'
 # img_name = '1-4302.jpeg'
-img_name = '1-4536.PNG'
+#img_name = game_num + '.PNG'
 
 set_x, set_y = find_grid2('../data/' + img_name)
 n_list = get_list_from_image('../data/' + img_name, set_x, set_y)
