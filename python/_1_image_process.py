@@ -1,9 +1,11 @@
+import os
 from collections import Counter
 
 import cv2
 import numpy as np
 import pytesseract
 import re
+import pickle
 from _0_game_num import *
 
 # import numpy as np
@@ -189,18 +191,25 @@ def find_grid2(img_name):
         diff = set_xx[i + 1] - set_xx[i]
         if diff > 10:
             count_x += 1
-        print(f'{i}: {set_xx[i]} -> Next: {set_xx[i + 1]}, Difference: {set_xx[i + 1] - set_xx[i]}')
+        # print(f'{i}: {set_xx[i]} -> Next: {set_xx[i + 1]}, Difference: {set_xx[i + 1] - set_xx[i]}')
 
     print(f'count_x: {count_x}')
+
+    global use_saved_setxy
+    set_xy_filename = '../data/' +  f'nemo_{count_x}_xy.pos'
+    if use_saved_setxy and os.path.exists(set_xy_filename):
+        with open(set_xy_filename, 'rb') as f:
+            set_x, set_y = pickle.load(f)
+        return set_x, set_y
 
     normalized, grid_size, set_x, set_y = normalize_to_grid(points, count_x+1)
 
     set_x = {int(x) for x in set_x}
     set_y = {int(y) for y in set_y}
 
-    print("Original points:", points)
-    print("Normalized points:", normalized.tolist())
-    print("Estimated grid size:", grid_size)
+    # print("Original points:", points)
+    # print("Normalized points:", normalized.tolist())
+    # print("Estimated grid size:", grid_size)
 
     print(f'min_w: {min_w}, min_h: {min_h}')
     # sort set_x, set_y
@@ -226,6 +235,7 @@ def find_grid2(img_name):
     gap_x = ((max_xx - min_xx) - (max_x - min_x)) // 2
     gap_y = ((max_yy - min_yy) - (max_y - min_y)) // 2
 
+    print(f'gap_x: {gap_x}, gap_y: {gap_y}')
     set_x = {x + gap_x for x in set_x}
     set_y = {y + gap_y for y in set_y}
     min_x += gap_x
@@ -241,6 +251,17 @@ def find_grid2(img_name):
     # cv2.imshow("Final Image", image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
+
+    set_x = sorted(set_x)
+    set_y = sorted(set_y)
+
+    print(f'set_x: {set_x}')
+    print(f'set_y: {set_y}')
+
+    if not os.path.exists(set_xy_filename):
+        # save set_x, set_y with pickle
+        with open(set_xy_filename, 'wb') as f:
+            pickle.dump((set_x, set_y), f)
 
     return set_x, set_y
 
@@ -334,6 +355,17 @@ def find_grid(img_name):
 
 
 def get_list_from_image(img_name, set_x, set_y):
+
+    # _list 변수가 serialize된 데이터 파일로 저장되어 있으면 그대로 로딩해서 사용한다.
+    list_pickle_file_name = img_name + '.pickle'
+    # list_pickle_file_name 이 존재하면 로드한다.
+    try:
+        with open(list_pickle_file_name, 'rb') as f:
+            _list = pickle.load(f)
+        return _list
+    except:
+        pass
+
     err_count = 0
     rgb = cv2.imread(img_name)
     small = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
@@ -433,6 +465,10 @@ def get_list_from_image(img_name, set_x, set_y):
     cv2.imwrite(img_name + '_out.png', rgb)
     # cv2.waitKey()
 
+    # _list을 serialize해서 저장한다.
+    with open(list_pickle_file_name, 'wb') as f:
+        pickle.dump(_list, f)
+
 
 
     return _list
@@ -496,7 +532,8 @@ def save_file(_list, img_name, out_file, set_x, set_y):
     rgb = cv2.imread(img_name, 0)
     for i in range(len(set_x) - 1):
         print(f'i : {i}')
-        sub_list = [x for x in _list if x[1] > set_x[i]-10 and (x[1] + x[3]) < set_x[i+1]+10]
+        margin = 10 if i > 0 else 5
+        sub_list = [x for x in _list if x[1] > set_x[i]-margin and (x[1] + x[3]) < set_x[i+1]+10]
         sub_list = sorted(sub_list, key=lambda x: x[2])
         f.write("{0}".format(len(sub_list)))
         for j in range(len(sub_list)):

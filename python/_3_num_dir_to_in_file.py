@@ -38,6 +38,7 @@ list_y = []
 sum_x = 0
 sum_y = 0
 
+prev_f_2 = 0
 for f in num_files:
 	try:
 		f1 = f.split("_")
@@ -47,20 +48,29 @@ for f in num_files:
 
 		if f1[1] == "x":
 			sum_x += val
+
 			if (int(f_2) >= len(list_x)):
 				list_x.append([])
 			if (int(f_3) >= len(list_x[int(f_2)])):
 				list_x[int(f_2)].append(val)
+			else:
+				print("error: {0}".format(f))
+				exit(0)
 
 		if f1[1] == "y":
 			sum_y += val
+
 			if (int(f_2) >= len(list_y)):
 				list_y.append([])
 			if (int(f_3) >= len(list_y[int(f_2)])):
 				list_y[int(f_2)].append(val)
+			else:
+				print("error: {0}".format(f))
+				exit(0)
 
 		cp_num_file("{0}/{1}".format(num_dir, f), val)
 	except:
+		print("error: {0}".format(f))
 		continue
 
 print("sum_x: {0}, sum_y: {1}".format(sum_x, sum_y))
