@@ -528,6 +528,8 @@ def save_file(_list, img_name, out_file, set_x, set_y):
     f = open(out_file, 'wt')
     f.write("{0} {1}\n".format(len(set_x)-1, len(set_y)-1))
 
+    num_info_dict = {}
+
     img_num = cv2.imread(img_name)
     rgb = cv2.imread(img_name, 0)
     for i in range(len(set_x) - 1):
@@ -542,11 +544,14 @@ def save_file(_list, img_name, out_file, set_x, set_y):
             print({x: sub_list[j][x] for x in range(8)})
             num_image = rgb[sub_list[j][2]:sub_list[j][2]+sub_list[j][4], sub_list[j][1]:sub_list[j][1]+sub_list[j][3]]
             cv2.imwrite(f'../data/_x_{i}_{j}_{sub_list[j][7]}.png', num_image)
-
             cv2.rectangle(img_num, (sub_list[j][1]-1, sub_list[j][2]-1), (sub_list[j][1]+sub_list[j][3]+1, sub_list[j][2]+sub_list[j][4]+1), (0, 0, 255), -1)
 
             # cv2.imshow('num_image', num_image)
             # cv2.waitKey()
+
+            key_str = f'x_{i}_{j}'
+            num_info_dict[key_str] = sub_list[j][1:5]
+
         f.write("\n")
     print("-------------------------------------------------")
     f.write("\n")
@@ -564,9 +569,16 @@ def save_file(_list, img_name, out_file, set_x, set_y):
             cv2.rectangle(img_num, (sub_list[j][1]-1, sub_list[j][2]-1), (sub_list[j][1]+sub_list[j][3]+1, sub_list[j][2]+sub_list[j][4]+1), (0, 0, 255), -1)
             # cv2.imshow('num_image', num_image)
             # cv2.waitKey()
+
+            key_str = f'y_{i}_{j}'
+            num_info_dict[key_str] = sub_list[j][1:5]
+
         f.write("\n")
 
     cv2.imwrite(img_name + '_out_num.png', img_num)
+
+    with open(img_name + '_num_info.pickle', 'wb') as pf:
+        pickle.dump(num_info_dict, pf)
 
     '''
     # 그룹별로 위치만 정한다
