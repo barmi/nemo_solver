@@ -637,7 +637,10 @@ def save_file(_list, img_name, out_file, set_x, set_y):
 # img_name = '1-133.PNG'
 # img_name = '1-4302.jpeg'
 #img_name = game_num + '.PNG'
+def process_1():
+    set_x, set_y = find_grid2('../data/' + img_name)
+    n_list = get_list_from_image('../data/' + img_name, set_x, set_y)
+    save_file(n_list, '../data/' + img_name, '../data/' + img_name + '.in', set_x, set_y)
 
-set_x, set_y = find_grid2('../data/' + img_name)
-n_list = get_list_from_image('../data/' + img_name, set_x, set_y)
-save_file(n_list, '../data/' + img_name, '../data/' + img_name + '.in', set_x, set_y)
+if __name__ == '__main__':
+    process_1()
