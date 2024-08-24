@@ -1,9 +1,10 @@
 import glob
 import os
 import pickle
+import re
 import shutil
 import sys
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
@@ -33,7 +34,7 @@ class frmNemo(QMainWindow):
 
 		hbox = QHBoxLayout()
 
-		image = QImage('../data/1-4757.PNG')
+		image = QImage(1284, 2778, QImage.Format_RGB32)
 		# Define crop range
 		crop_y_start = 350
 		crop_y_end = 1800
@@ -52,7 +53,7 @@ class frmNemo(QMainWindow):
 		self.img1.setFixedHeight(self.new_height)
 		hbox.addWidget(self.img1)
 
-		image = QImage('../data/1-4757.PNG_out_num.PNG')
+		image = QImage(1284, 2778, QImage.Format_RGB32)
 		image = image.copy(0, crop_y_start, image.width(), crop_height)
 		image = image.scaled(self.new_width, self.new_height, Qt.KeepAspectRatio)
 		self.img2 = QLabel()
@@ -67,6 +68,33 @@ class frmNemo(QMainWindow):
 		btn = QPushButton('refresh')
 		btn.clicked.connect(self.OnRefresh)
 		layout.addWidget(btn, row, 0)
+
+		row += 1
+		hbox = QHBoxLayout()
+		self.listImage = QListView()
+		self.listImage.setFixedHeight(100)
+		self.listImage.setFlow(QListView.TopToBottom)
+		self.listImage.setWrapping(True)
+		hbox.addWidget(self.listImage)
+
+		btn = QPushButton('Process ALL (1,2,3)')
+		btn.clicked.connect(self.OnDoProcessAll)
+		hbox.addWidget(btn)
+
+		btn = QPushButton('Process 1')
+		btn.clicked.connect(self.OnDoProcess1)
+		hbox.addWidget(btn)
+
+		btn = QPushButton('Process 2')
+		btn.clicked.connect(self.OnDoProcess2)
+		hbox.addWidget(btn)
+
+		btn = QPushButton('Process 3')
+		btn.clicked.connect(self.OnDoProcess3)
+		hbox.addWidget(btn)
+
+		layout.addLayout(hbox, row, 0, 1, 3)
+
 
 		row += 1
 		self.listFile = QListWidget()
@@ -148,9 +176,15 @@ class frmNemo(QMainWindow):
 		self.listFile.clear()
 		dir_list = os.listdir(data_dir)
 		dir_list.sort()
+		model = QStandardItemModel()
+
+		image_pattern = re.compile(r'^\d+-\d{4}\.PNG$')
 		for item in dir_list:
 			if os.path.isdir(os.path.join(data_dir, item)) and item.startswith('_num_'):
 				self.listFile.addItem(item[5:])
+			elif image_pattern.match(item):
+				model.appendRow(QStandardItem(item[:-4]))
+		self.listImage.setModel(model)
 
 
 	def OnFileSelected(self):
@@ -351,6 +385,11 @@ class frmNemo(QMainWindow):
 			new_file_path = os.path.join(data_dir, new_file_name)
 			os.rename(old_file_list[0], new_file_path)
 
+			old_num_info_key = parts[1] + '_' + parts[2] + '_' + str(end_index)
+			new_num_info_key = pts[1] + '_' + pts[2] + '_' + pts[3]
+			self.num_info_dict[new_num_info_key] = self.num_info_dict[old_num_info_key]
+			del self.num_info_dict[old_num_info_key]
+
 			end_index -= 1
 
 		sp_start_index = int(parts[3])
@@ -359,11 +398,22 @@ class frmNemo(QMainWindow):
 			new_file_name = '_' + parts[1] + '_' + parts[2] + '_' + str(sp_start_index + i) + '_' + split_list[i] + '.png'
 			if sp_file_name == new_file_name:
 				continue
+
+			pts = sp_file_name.split('_')
+			old_num_info_key = pts[1] + '_' + pts[2] + '_' + pts[3]
+			new_num_info_key = parts[1] + '_' + parts[2] + '_' + str(sp_start_index + i)
 			if i == 0:
 				os.rename(os.path.join(data_dir, sp_file_name), os.path.join(data_dir, new_file_name))
+				# i == 0 일때는 위지정보가 변겨되지 않는다.
+				# self.num_info_dict[new_num_info_key] = self.num_info_dict[old_num_info_key]
+				# del self.num_info_dict[old_num_info_key]
 				sp_file_name = new_file_name
 			else:
 				shutil.copy(os.path.join(data_dir, sp_file_name), os.path.join(data_dir, new_file_name))
+				self.num_info_dict[new_num_info_key] = self.num_info_dict[old_num_info_key]
+
+		with open('../data/' + self.listFile.currentItem().text() + '.PNG_num_info.pickle', 'wb') as f:
+			pickle.dump(self.num_info_dict, f)
 
 
 	def OnInsertNumValue(self):
@@ -409,6 +459,12 @@ class frmNemo(QMainWindow):
 			new_file_path = os.path.join(data_dir, new_file_name)
 			os.rename(old_file_list[0], new_file_path)
 
+			parts = old_file_list[0].split('_')
+			old_num_info_key = parts[1] + '_' + parts[2] + '_' + str(end_index)
+			new_num_info_key = pts[1] + '_' + pts[2] + '_' + pts[3]
+			self.num_info_dict[new_num_info_key] = self.num_info_dict[old_num_info_key]
+			del self.num_info_dict[old_num_info_key]
+
 			end_index -= 1
 
 		insert_start_index = int(self.edtInPos2.text())
@@ -417,6 +473,41 @@ class frmNemo(QMainWindow):
 			new_file_path = os.path.join(data_dir, new_file_name)
 			with open(new_file_path, 'w') as f:
 				os.utime(new_file_path, None)
+
+		with open('../data/' + self.listFile.currentItem().text() + '.PNG_num_info.pickle', 'wb') as f:
+			pickle.dump(self.num_info_dict, f)
+
+	def OnDoProcessAll(self):
+		self.OnDoProcess1()
+		self.OnDoProcess2()
+		self.OnDoProcess3()
+
+	def OnDoProcess1(self):
+		selected_indexes = self.listImage.selectedIndexes()
+		if not selected_indexes:
+			return
+		selected_item = selected_indexes[0].data()
+
+		from _1_image_process import process_1
+		process_1(selected_item)
+
+	def OnDoProcess2(self):
+		selected_indexes = self.listImage.selectedIndexes()
+		if not selected_indexes:
+			return
+		selected_item = selected_indexes[0].data()
+
+		from _2_mv_png_dir import process_2
+		process_2(selected_item)
+
+	def OnDoProcess3(self):
+		selected_indexes = self.listImage.selectedIndexes()
+		if not selected_indexes:
+			return
+		selected_item = selected_indexes[0].data()
+
+		from _3_num_dir_to_in_file import process_3
+		process_3(selected_item)
 
 def main():
 	app = QApplication(sys.argv)
