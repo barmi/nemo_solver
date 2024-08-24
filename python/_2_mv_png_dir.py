@@ -1,9 +1,11 @@
 import os
 import shutil
 import glob
-from _0_game_num import *
+# from _0_game_num import *
 
-def process_2():
+def process_2(game_num):
+    img_name = game_num + ".PNG"
+
     # 디렉토리 이름 설정
     png_dir = "../data/_num_" + game_num
 

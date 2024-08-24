@@ -1,7 +1,7 @@
 import os
 import re
 import shutil
-from _0_game_num import *
+# from _0_game_num import *
 
 
 def natural_sort_key(s):
@@ -12,7 +12,7 @@ def natural_sort_key(s):
     """
 	return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
 
-def process_3():
+def process_3(game_num):
 	# game_num = "1-4536"
 	num_dir = "../data/_num_{0}".format(game_num)
 	in_file = "../data/{0}.in".format(game_num)

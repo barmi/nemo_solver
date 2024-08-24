@@ -6,10 +6,11 @@ import numpy as np
 import pytesseract
 import re
 import pickle
-from _0_game_num import *
+# from _0_game_num import *
 
 # import numpy as np
 from scipy import stats
+use_saved_setxy = True
 
 
 def normalize_to_grid(points, grid_size):
@@ -49,16 +50,16 @@ def normalize_to_grid(points, grid_size):
 
 def find_grid2(img_name):
     image  = cv2.imread(img_name)
-    cv2.imshow("Image", image)
+    # cv2.imshow("Image", image)
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    cv2.imshow("gray", gray)
+    # cv2.imshow("gray", gray)
 
     blur = cv2.GaussianBlur(gray, (5,5), 15)
-    cv2.imshow("blur", blur)
+    # cv2.imshow("blur", blur)
 
     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 3, 2)
-    cv2.imshow("thresh", thresh)
+    # cv2.imshow("thresh", thresh)
 
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -77,17 +78,17 @@ def find_grid2(img_name):
     mask = np.zeros((gray.shape),np.uint8)
     cv2.drawContours(mask,[best_cnt],0,255, -1)
     cv2.drawContours(mask,[best_cnt],0,0,5)
-    cv2.imshow("mask", mask)
+    # cv2.imshow("mask", mask)
 
     out = np.zeros_like(gray)
     out[mask == 255] = gray[mask == 255]
-    cv2.imshow("New image", out)
+    # cv2.imshow("New image", out)
 
     blur = cv2.GaussianBlur(out, (5,5), 0)
-    cv2.imshow("blur1", blur)
+    # cv2.imshow("blur1", blur)
 
     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-    cv2.imshow("thresh1", thresh)
+    # cv2.imshow("thresh1", thresh)
 
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -112,17 +113,17 @@ def find_grid2(img_name):
     mask = np.zeros((gray.shape),np.uint8)
     cv2.drawContours(mask,[best_cnt],0,255, -1)
     cv2.drawContours(mask,[best_cnt],0,0,5)
-    cv2.imshow("mask", mask)
+    # cv2.imshow("mask", mask)
 
     out = np.zeros_like(gray)
     out[mask == 255] = gray[mask == 255]
-    cv2.imshow("New image", out)
+    # cv2.imshow("New image", out)
 
     blur = cv2.GaussianBlur(out, (5,5), 0)
-    cv2.imshow("blur1", blur)
+    # cv2.imshow("blur1", blur)
 
     thresh = cv2.adaptiveThreshold(blur, 255, 1, 1, 11, 2)
-    cv2.imshow("thresh1", thresh)
+    # cv2.imshow("thresh1", thresh)
 
     '''
     '''
@@ -461,7 +462,7 @@ def get_list_from_image(img_name, set_x, set_y):
     #     cv2.rectangle(rgb, (x, y), (x+w-1, y+h-1), (0, 0, 255), 2)
 
     # show image with contours rect
-    cv2.imshow('rects', rgb)
+    # cv2.imshow('rects', rgb)
     cv2.imwrite(img_name + '_out.png', rgb)
     # cv2.waitKey()
 
@@ -637,7 +638,9 @@ def save_file(_list, img_name, out_file, set_x, set_y):
 # img_name = '1-133.PNG'
 # img_name = '1-4302.jpeg'
 #img_name = game_num + '.PNG'
-def process_1():
+def process_1(game_num):
+    img_name = game_num + '.PNG'
+
     set_x, set_y = find_grid2('../data/' + img_name)
     n_list = get_list_from_image('../data/' + img_name, set_x, set_y)
     save_file(n_list, '../data/' + img_name, '../data/' + img_name + '.in', set_x, set_y)
