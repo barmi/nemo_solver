@@ -121,14 +121,17 @@ void MainWindow::FileLoad()
         for (int i = 0; i < sizey; i++) {
             int num;
             vector<uint8_t> l;
+            int y_sum = 0;
             fscanf(fp, "%d", &num);
             for (int j = 0; j < num; j++) {
                 int label;
                 fscanf(fp, "%d", &label);
                 sum += label;
+                y_sum += label;
                 l.push_back(label);
             }
             label_row.push_back(l);
+//            cout << i << " : " << y_sum << ", " << sum << endl;
         }
         cout << "가로합 : " << sum << endl;
 
@@ -362,6 +365,8 @@ void MainWindow::Process()
 
     painter.end();
     img.save(QString::fromStdString(load_file_name + "_out.png"));
+
+    cout << "save file : " << load_file_name + "_out.png" << endl;
 
     delete [] right_count;
     delete [] down_count;
