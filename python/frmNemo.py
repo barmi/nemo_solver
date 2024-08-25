@@ -132,14 +132,17 @@ class frmNemo(QMainWindow):
 		self.comboXY = QComboBox()
 		self.comboXY.addItem('x')
 		self.comboXY.addItem('y')
+		self.comboXY.currentIndexChanged.connect(self.OnInfoPosChanged)
 		hbox.addWidget(self.comboXY)
 		lbl = QLabel('pos1')
 		hbox.addWidget(lbl)
-		self.edtInPos1 = QLineEdit()
+		self.edtInPos1 = QSpinBox()
+		self.edtInPos1.valueChanged.connect(self.OnInfoPosChanged)
 		hbox.addWidget(self.edtInPos1)
 		lbl = QLabel('pos2')
 		hbox.addWidget(lbl)
-		self.edtInPos2 = QLineEdit()
+		self.edtInPos2 = QSpinBox()
+		self.edtInPos2.valueChanged.connect(self.OnInfoPosChanged)
 		hbox.addWidget(self.edtInPos2)
 		lbl = QLabel('1')
 		hbox.addWidget(lbl)
@@ -219,6 +222,15 @@ class frmNemo(QMainWindow):
 		if os.path.exists(pickle_file):
 			with open(pickle_file, 'rb') as f:
 				self.num_info_dict = pickle.load(f)
+
+		# Select the corresponding item in self.listImage
+		selected_num_item = self.listFile.currentItem().text()
+		model = self.listImage.model()
+		for row in range(model.rowCount()):
+			item = model.item(row)
+			if item.text() == selected_num_item:
+				self.listImage.setCurrentIndex(item.index())
+				break
 
 
 	def OnNumSelected(self):
@@ -459,11 +471,11 @@ class frmNemo(QMainWindow):
 			new_file_path = os.path.join(data_dir, new_file_name)
 			os.rename(old_file_list[0], new_file_path)
 
-			parts = old_file_list[0].split('_')
-			old_num_info_key = parts[1] + '_' + parts[2] + '_' + str(end_index)
-			new_num_info_key = pts[1] + '_' + pts[2] + '_' + pts[3]
-			self.num_info_dict[new_num_info_key] = self.num_info_dict[old_num_info_key]
-			del self.num_info_dict[old_num_info_key]
+			# parts = old_file_list[0].split('_')
+			# old_num_info_key = parts[1] + '_' + parts[2] + '_' + str(end_index)
+			# new_num_info_key = pts[1] + '_' + pts[2] + '_' + pts[3]
+			# self.num_info_dict[new_num_info_key] = self.num_info_dict[old_num_info_key]
+			# del self.num_info_dict[old_num_info_key]
 
 			end_index -= 1
 
@@ -474,8 +486,8 @@ class frmNemo(QMainWindow):
 			with open(new_file_path, 'w') as f:
 				os.utime(new_file_path, None)
 
-		with open('../data/' + self.listFile.currentItem().text() + '.PNG_num_info.pickle', 'wb') as f:
-			pickle.dump(self.num_info_dict, f)
+		# with open('../data/' + self.listFile.currentItem().text() + '.PNG_num_info.pickle', 'wb') as f:
+		# 	pickle.dump(self.num_info_dict, f)
 
 	def OnDoProcessAll(self):
 		self.OnDoProcess1()
@@ -508,6 +520,33 @@ class frmNemo(QMainWindow):
 
 		from _3_num_dir_to_in_file import process_3
 		process_3(selected_item)
+
+	def OnInfoPosChanged(self):
+		num_info_key = self.comboXY.currentText() + '_' + self.edtInPos1.text() + '_' + self.edtInPos2.text()
+
+		image = self.img1_org.copy()
+		image2 = self.img2_org.copy()
+		if num_info_key in self.num_info_dict:
+			print(self.num_info_dict[num_info_key])
+			painter = QPainter(image)
+			painter2 = QPainter(image2)
+			pen = QPen(Qt.green)
+			pen.setWidth(1)
+			painter.setPen(pen)
+			painter2.setPen(pen)
+			ratio = self.new_width / self.org_width
+			x = int(self.num_info_dict[num_info_key][0]) * ratio
+			y = (int(self.num_info_dict[num_info_key][1]) - self.crop_y_start) * ratio
+			h = int(self.num_info_dict[num_info_key][3]) * ratio
+			w = int(self.num_info_dict[num_info_key][2]) * ratio
+			painter.drawRect(x-1, y-1, w+3, h+3)
+			painter.end()
+			painter2.drawRect(x-1, y-1, w+3, h+3)
+			painter2.end()
+
+		self.img1.setPixmap(QPixmap.fromImage(image))
+		self.img2.setPixmap(QPixmap.fromImage(image2))
+
 
 def main():
 	app = QApplication(sys.argv)
